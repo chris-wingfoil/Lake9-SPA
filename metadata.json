@@ -1,0 +1,8 @@
+
+{
+  "name": "Lake9.com - Stock Price Art",
+  "description": "An AI-agnostic platform transforming stock price data into viral art and business ecosystems using a nested AI hierarchy.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
