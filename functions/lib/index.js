@@ -38,6 +38,10 @@ const functions = __importStar(require("firebase-functions"));
 const genai_1 = require("@google/genai");
 const params_1 = require("firebase-functions/params");
 const geminiApiKey = (0, params_1.defineSecret)('GEMINI_API_KEY');
+// NOTE: CORS is automatically handled by Firebase Callable Functions (onCall).
+// The function can only be called from your Firebase project's authorized domains
+// which are configured in Firebase Console > Authentication > Settings > Authorized domains
+// Current authorized domains: lake9-dev.web.app, lake9-dev.firebaseapp.com
 exports.generateArt = functions
     .runWith({ secrets: [geminiApiKey] })
     .https.onCall(async (data) => {

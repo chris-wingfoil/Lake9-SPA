@@ -19,6 +19,10 @@ interface AIProcessingResult {
   visualNarrative: string;
 }
 
+// NOTE: CORS is automatically handled by Firebase Callable Functions (onCall).
+// The function can only be called from your Firebase project's authorized domains
+// which are configured in Firebase Console > Authentication > Settings > Authorized domains
+// Current authorized domains: lake9-dev.web.app, lake9-dev.firebaseapp.com
 export const generateArt = functions
   .runWith({ secrets: [geminiApiKey] })
   .https.onCall(async (data: RequestData) => {
