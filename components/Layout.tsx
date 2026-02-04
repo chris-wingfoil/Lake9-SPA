@@ -26,7 +26,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {children}
       </main>
       <footer className="py-12 border-t border-slate-800 text-center text-slate-500 text-sm">
-        <p>&copy; 2024 Lake9.com. End-to-End Encrypted Art Processing.</p>
+        <p>&copy; 2026 Lake9 Development Inc. End-to-End Encrypted Art Processing.</p>
       </footer>
     </div>
   );
