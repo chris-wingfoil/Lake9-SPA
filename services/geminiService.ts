@@ -1,14 +1,18 @@
 
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
 import { StockPoint, AIProcessingResult, AIProvider } from "../types";
 
 const firebaseConfig = {
   projectId: 'lake9-dev',
+  authDomain: 'lake9-dev.firebaseapp.com',
+  storageBucket: 'lake9-dev.appspot.com',
+  messagingSenderId: '839377096508',
+  appId: '1:839377096508:web:your-app-id'
 };
 
 const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app);
+const functions = getFunctions(app, 'us-central1');
 
 export class GeminiProvider implements AIProvider {
   name = "Gemini Flash";
