@@ -1,5 +1,8 @@
 import * as functions from 'firebase-functions';
 import { GoogleGenAI, Type } from '@google/genai';
+import { defineSecret } from 'firebase-functions/params';
+
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 interface RequestData {
   stockData: Array<{
@@ -16,21 +19,21 @@ interface AIProcessingResult {
   visualNarrative: string;
 }
 
-export const generateArt = functions.https.onCall(async (data: RequestData) => {
-  // For now, require API key to be passed from client
-  // In production, set via Firebase Functions config
-  const apiKey = process.env.GEMINI_API_KEY;
+export const generateArt = functions
+  .runWith({ secrets: [geminiApiKey] })
+  .https.onCall(async (data: RequestData) => {
+    const apiKey = geminiApiKey.value();
     
-  if (!apiKey) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'API key not configured. Please upgrade to Blaze plan.'
-    );
-  }
+    if (!apiKey) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'API key not configured'
+      );
+    }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const stockData = data.stockData;
-  const dataStr = JSON.stringify(stockData);
+    const ai = new GoogleGenAI({ apiKey });
+    const stockData = data.stockData;
+    const dataStr = JSON.stringify(stockData);
 
   try {
     // Step 1: Manager AI Orchestration (Text Processing)
