@@ -1,7 +1,6 @@
 import { 
   getAuth, 
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut as firebaseSignOut,
   GoogleAuthProvider, 
   onAuthStateChanged,
@@ -25,44 +24,28 @@ export interface AuthUser {
 }
 
 /**
- * Sign in with Google using redirect flow (no popup, no COOP issues)
+ * Sign in with Google using popup flow (original working method)
  * Returns the authenticated user with access token for Drive API
  */
 export const signInWithGoogle = async (): Promise<AuthUser> => {
   try {
-    // Start redirect to Google sign-in
-    await signInWithRedirect(auth, googleProvider);
+    console.log('?? Starting sign-in with popup...');
+    console.log('?? Auth domain:', auth.config.authDomain);
+    console.log('?? Using provider:', googleProvider.providerId);
     
-    // This will redirect the page - execution stops here
-    // Result will be handled by handleRedirectResult() on page load
-    return {
-      uid: '',
-      email: null,
-      displayName: null,
-      photoURL: null,
-      accessToken: null
-    };
-  } catch (error: any) {
-    console.error('Sign-in error:', error);
-    throw new Error(`Authentication failed: ${error.message}`);
-  }
-};
-
-/**
- * Handle redirect result after Google sign-in
- * Call this on app initialization
- */
-export const handleRedirectResult = async (): Promise<AuthUser | null> => {
-  try {
-    const result = await getRedirectResult(auth);
-    
-    if (!result) {
-      return null; // No redirect result (normal page load)
-    }
+    // Open popup for Google sign-in
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log('? Popup sign-in successful:', result.user.email);
     
     // Get the Google Access Token for Drive API calls
     const credential = GoogleAuthProvider.credentialFromResult(result);
     const accessToken = credential?.accessToken || null;
+    
+    console.log('?? Access token:', accessToken ? 'YES (' + accessToken.substring(0, 20) + '...)' : 'NO');
+    
+    if (!accessToken) {
+      console.warn('?? No access token received. User may need to re-authenticate for Drive access.');
+    }
     
     // Cache the access token for Drive API use
     cacheAccessToken(accessToken);
@@ -77,9 +60,36 @@ export const handleRedirectResult = async (): Promise<AuthUser | null> => {
       accessToken
     };
   } catch (error: any) {
-    console.error('Redirect result error:', error);
-    return null;
+    console.error('? Sign-in error:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
+    // Provide helpful error messages
+    let userMessage = 'Authentication failed';
+    if (error.code === 'auth/unauthorized-domain') {
+      userMessage = 'This domain is not authorized. Please add it to Firebase Console > Authentication > Settings > Authorized domains';
+    } else if (error.code === 'auth/operation-not-allowed') {
+      userMessage = 'Google Sign-In is not enabled. Please enable it in Firebase Console > Authentication > Sign-in method';
+    } else if (error.code === 'auth/popup-blocked') {
+      userMessage = 'Popup was blocked by browser. Please allow popups for this site and try again.';
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      userMessage = 'Sign-in cancelled. Please try again.';
+    } else if (error.message) {
+      userMessage = error.message;
+    }
+    
+    throw new Error(userMessage);
   }
+};
+
+/**
+ * Note: handleRedirectResult is no longer needed with popup flow
+ * Keeping this as a no-op for backward compatibility
+ */
+export const handleRedirectResult = async (): Promise<AuthUser | null> => {
+  // Not needed for popup flow - sign-in completes immediately
+  console.log('?? Using popup flow - redirect result handling not needed');
+  return null;
 };
 
 /**

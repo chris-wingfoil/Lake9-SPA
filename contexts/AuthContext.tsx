@@ -20,10 +20,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Handle redirect result on page load
     const checkRedirect = async () => {
+      console.log('?? Checking for redirect result...');
       const redirectResult = await handleRedirectResult();
       if (redirectResult) {
         setAuthUser(redirectResult);
-        console.log('? Sign-in successful via redirect');
+        console.log('? Sign-in successful via redirect', redirectResult);
+      } else {
+        console.log('?? No redirect result (normal page load)');
       }
     };
     
@@ -31,6 +34,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     // Listen to auth state changes
     const unsubscribe = onAuthChange((firebaseUser) => {
+      console.log('?? Auth state changed:', firebaseUser ? 'Signed in' : 'Signed out');
       setUser(firebaseUser);
       setLoading(false);
     });
@@ -40,13 +44,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = async () => {
     try {
-      // This will redirect the page
-      await signInWithGoogle();
-      // Note: Code after this won't execute as page redirects
+      setLoading(true);
+      // This will open a popup and complete immediately (or throw error)
+      const result = await signInWithGoogle();
+      setAuthUser(result);
+      console.log('? Sign-in successful via popup', result);
     } catch (error) {
       console.error('Sign-in failed:', error);
-      setLoading(false);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

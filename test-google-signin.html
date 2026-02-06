@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-In Diagnostic Test - Lake9</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        h1 { color: #38bdf8; }
+        h2 { color: #7dd3fc; margin-top: 30px; }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
+        .error { background: #450a0a; color: #fca5a5; border: 1px solid #dc2626; }
+        .info { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+        .warning { background: #78350f; color: #fbbf24; border: 1px solid #f59e0b; }
+        button {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 5px;
+        }
+        button:hover { background: #0369a1; }
+        button:disabled {
+            background: #334155;
+            cursor: not-allowed;
+        }
+        .code {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid #334155;
+            padding-left: 15px;
+        }
+        .checklist li.check { border-left-color: #10b981; }
+        .checklist li.fail { border-left-color: #dc2626; }
+    </style>
+</head>
+<body>
+    <h1>?? Google Sign-In Diagnostic Test</h1>
+    <p>This page will help diagnose issues with Google Sign-In for Lake9.</p>
+
+    <div class="test-section">
+        <h2>1. Firebase Configuration Test</h2>
+        <div id="firebase-status"></div>
+        <button onclick="testFirebaseConfig()">Run Firebase Test</button>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Authentication Provider Test</h2>
+        <div id="auth-status"></div>
+        <button onclick="testAuthProvider()">Run Auth Test</button>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Google Sign-In Test</h2>
+        <div id="signin-status"></div>
+        <button onclick="testSignIn()" id="signin-btn">Test Google Sign-In</button>
+        <button onclick="testSignOut()" id="signout-btn" disabled>Sign Out</button>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Current Auth State</h2>
+        <div id="current-state"></div>
+        <button onclick="checkAuthState()">Check Current State</button>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Configuration Checklist</h2>
+        <ul class="checklist" id="checklist">
+            <li>? Checking Firebase initialization...</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Console Logs</h2>
+        <div class="code" id="console-logs" style="max-height: 300px; overflow-y: auto;">
+            Logs will appear here...
+        </div>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYYrVwOSiIGbxosUBAsEmaSgYGoBrchUw",
+            authDomain: "lake9-dev.firebaseapp.com",
+            projectId: "lake9-dev",
+            storageBucket: "lake9-dev.firebasestorage.app",
+            messagingSenderId: "839377096508",
+            appId: "1:839377096508:web:85509167012e4ca3871839",
+            measurementId: "G-NGNZVEHRXR"
+        };
+
+        let app, auth, provider;
+        const logs = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push({ timestamp, message, type });
+            console.log(`[${timestamp}] ${message}`);
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const logDiv = document.getElementById('console-logs');
+            logDiv.innerHTML = logs.map(l => 
+                `<div style="color: ${l.type === 'error' ? '#fca5a5' : l.type === 'success' ? '#6ee7b7' : '#93c5fd'}">
+                    [${l.timestamp}] ${l.message}
+                </div>`
+            ).join('');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(elementId, message, type) {
+            const div = document.getElementById(elementId);
+            div.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateChecklist(items) {
+            const ul = document.getElementById('checklist');
+            ul.innerHTML = items.map(item => 
+                `<li class="${item.status}">${item.icon} ${item.text}</li>`
+            ).join('');
+        }
+
+        window.testFirebaseConfig = function() {
+            log('Testing Firebase configuration...', 'info');
+            try {
+                if (!getApps().length) {
+                    app = initializeApp(firebaseConfig);
+                } else {
+                    app = getApps()[0];
+                }
+                log('? Firebase initialized successfully', 'success');
+                updateStatus('firebase-status', 
+                    `? Firebase App Initialized<br>
+                    Project ID: ${firebaseConfig.projectId}<br>
+                    Auth Domain: ${firebaseConfig.authDomain}`, 
+                    'success');
+                return true;
+            } catch (error) {
+                log(`? Firebase initialization failed: ${error.message}`, 'error');
+                updateStatus('firebase-status', `? Error: ${error.message}`, 'error');
+                return false;
+            }
+        };
+
+        window.testAuthProvider = function() {
+            log('Testing Auth provider...', 'info');
+            try {
+                auth = getAuth(app);
+                provider = new GoogleAuthProvider();
+                provider.addScope('https://www.googleapis.com/auth/drive.file');
+                provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+                
+                log('? Auth provider configured', 'success');
+                updateStatus('auth-status', 
+                    `? Auth Provider Configured<br>
+                    Provider: ${provider.providerId}<br>
+                    Scopes: drive.file, userinfo.profile`, 
+                    'success');
+                return true;
+            } catch (error) {
+                log(`? Auth provider error: ${error.message}`, 'error');
+                updateStatus('auth-status', `? Error: ${error.message}`, 'error');
+                return false;
+            }
+        };
+
+        window.testSignIn = async function() {
+            log('?? Starting Google Sign-In test...', 'info');
+            try {
+                updateStatus('signin-status', '? Redirecting to Google...', 'info');
+                await signInWithRedirect(auth, provider);
+                log('?? Redirect initiated', 'info');
+            } catch (error) {
+                log(`? Sign-in error: ${error.code} - ${error.message}`, 'error');
+                updateStatus('signin-status', 
+                    `? Sign-In Failed<br>
+                    Code: ${error.code}<br>
+                    Message: ${error.message}<br><br>
+                    ${getErrorHelp(error.code)}`, 
+                    'error');
+            }
+        };
+
+        window.testSignOut = async function() {
+            log('Signing out...', 'info');
+            try {
+                await signOut(auth);
+                log('? Signed out successfully', 'success');
+                updateStatus('signin-status', '? Signed out', 'success');
+                document.getElementById('signin-btn').disabled = false;
+                document.getElementById('signout-btn').disabled = true;
+            } catch (error) {
+                log(`? Sign-out error: ${error.message}`, 'error');
+            }
+        };
+
+        window.checkAuthState = function() {
+            const user = auth.currentUser;
+            if (user) {
+                log(`? User signed in: ${user.email}`, 'success');
+                updateStatus('current-state', 
+                    `? Signed In<br>
+                    Email: ${user.email}<br>
+                    UID: ${user.uid}<br>
+                    Display Name: ${user.displayName || 'N/A'}<br>
+                    Email Verified: ${user.emailVerified}`, 
+                    'success');
+                document.getElementById('signin-btn').disabled = true;
+                document.getElementById('signout-btn').disabled = false;
+            } else {
+                log('?? No user signed in', 'info');
+                updateStatus('current-state', '?? Not signed in', 'info');
+                document.getElementById('signin-btn').disabled = false;
+                document.getElementById('signout-btn').disabled = true;
+            }
+        };
+
+        window.clearLogs = function() {
+            logs.length = 0;
+            updateLogDisplay();
+        };
+
+        function getErrorHelp(errorCode) {
+            const helps = {
+                'auth/unauthorized-domain': 'Add this domain to Firebase Console > Authentication > Settings > Authorized domains',
+                'auth/operation-not-allowed': 'Enable Google Sign-In in Firebase Console > Authentication > Sign-in method',
+                'auth/popup-blocked': 'Popup was blocked (should not happen with redirect)',
+                'auth/network-request-failed': 'Check internet connection',
+                'auth/invalid-api-key': 'Check Firebase API key in config',
+            };
+            return helps[errorCode] || 'Check Firebase Console configuration';
+        }
+
+        async function checkRedirectResult() {
+            log('?? Checking for redirect result...', 'info');
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    log(`? Sign-in successful: ${result.user.email}`, 'success');
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    const accessToken = credential?.accessToken;
+                    log(`?? Access token: ${accessToken ? 'YES' : 'NO'}`, accessToken ? 'success' : 'warning');
+                    
+                    updateStatus('signin-status', 
+                        `? Sign-In Successful!<br>
+                        Email: ${result.user.email}<br>
+                        Access Token: ${accessToken ? 'YES ?' : 'NO ??'}`, 
+                        'success');
+                    
+                    document.getElementById('signin-btn').disabled = true;
+                    document.getElementById('signout-btn').disabled = false;
+                } else {
+                    log('?? No redirect result (normal page load)', 'info');
+                }
+            } catch (error) {
+                log(`? Redirect error: ${error.code} - ${error.message}`, 'error');
+                updateStatus('signin-status', 
+                    `? Redirect Error<br>
+                    Code: ${error.code}<br>
+                    Message: ${error.message}`, 
+                    'error');
+            }
+        }
+
+        async function runAutoTests() {
+            log('?? Running automatic tests...', 'info');
+            
+            const checks = [];
+            
+            // Test 1: Firebase init
+            if (testFirebaseConfig()) {
+                checks.push({ icon: '?', text: 'Firebase initialized', status: 'check' });
+            } else {
+                checks.push({ icon: '?', text: 'Firebase initialization failed', status: 'fail' });
+                updateChecklist(checks);
+                return;
+            }
+            
+            // Test 2: Auth provider
+            if (testAuthProvider()) {
+                checks.push({ icon: '?', text: 'Auth provider configured', status: 'check' });
+            } else {
+                checks.push({ icon: '?', text: 'Auth provider failed', status: 'fail' });
+                updateChecklist(checks);
+                return;
+            }
+            
+            // Test 3: Check redirect result
+            await checkRedirectResult();
+            checks.push({ icon: '?', text: 'Redirect check complete', status: 'check' });
+            
+            // Test 4: Listen to auth state
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    log(`?? Auth state changed: Signed in as ${user.email}`, 'success');
+                    checks.push({ icon: '?', text: `Signed in: ${user.email}`, status: 'check' });
+                } else {
+                    log('?? Auth state changed: Not signed in', 'info');
+                    checks.push({ icon: '??', text: 'Not signed in', status: '' });
+                }
+                updateChecklist(checks);
+                checkAuthState();
+            });
+            
+            // Test 5: Check current URL
+            checks.push({ icon: '??', text: `Current URL: ${window.location.href}`, status: '' });
+            
+            // Test 6: Check localStorage
+            const hasFirebaseData = Object.keys(localStorage).some(key => key.startsWith('firebase:'));
+            if (hasFirebaseData) {
+                checks.push({ icon: '?', text: 'Firebase data in localStorage', status: 'check' });
+            } else {
+                checks.push({ icon: '??', text: 'No Firebase data in localStorage', status: 'warning' });
+            }
+            
+            updateChecklist(checks);
+            log('? Automatic tests complete', 'success');
+        }
+
+        // Run tests on load
+        window.addEventListener('load', () => {
+            log('?? Page loaded', 'info');
+            runAutoTests();
+        });
+    </script>
+</body>
+</html>
