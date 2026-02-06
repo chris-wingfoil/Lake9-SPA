@@ -1,0 +1,112 @@
+import { 
+  getAuth, 
+  signInWithPopup, 
+  signOut as firebaseSignOut,
+  GoogleAuthProvider, 
+  onAuthStateChanged,
+  User 
+} from 'firebase/auth';
+import { app } from '../config/firebase';
+
+const auth = getAuth(app);
+
+// Google provider with Drive scope for file access
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  accessToken: string | null;
+}
+
+/**
+ * Sign in with Google and request Drive API access
+ * Returns the authenticated user with access token for Drive API
+ */
+export const signInWithGoogle = async (): Promise<AuthUser> => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    
+    // Get the Google Access Token for Drive API calls
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const accessToken = credential?.accessToken || null;
+    
+    // Cache the access token for Drive API use
+    cacheAccessToken(accessToken);
+    
+    const user = result.user;
+    
+    return {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      accessToken
+    };
+  } catch (error: any) {
+    console.error('Sign-in error:', error);
+    throw new Error(`Authentication failed: ${error.message}`);
+  }
+};
+
+/**
+ * Sign out the current user
+ */
+export const signOut = async (): Promise<void> => {
+  try {
+    await firebaseSignOut(auth);
+    // Clear cached access token on sign out
+    cacheAccessToken(null);
+  } catch (error: any) {
+    console.error('Sign-out error:', error);
+    throw new Error(`Sign-out failed: ${error.message}`);
+  }
+};
+
+/**
+ * Listen to authentication state changes
+ */
+export const onAuthChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
+
+/**
+ * Get the current user
+ */
+export const getCurrentUser = (): User | null => {
+  return auth.currentUser;
+};
+
+// Store access token in memory (will be lost on page refresh - user must re-authenticate)
+let cachedAccessToken: string | null = null;
+
+/**
+ * Cache the access token from sign-in
+ */
+export const cacheAccessToken = (token: string | null) => {
+  cachedAccessToken = token;
+};
+
+/**
+ * Get cached access token for Drive API calls
+ * Returns the access token from the last sign-in
+ * If null, user needs to sign in again
+ */
+export const getDriveAccessToken = async (): Promise<string | null> => {
+  const user = auth.currentUser;
+  if (!user) return null;
+  
+  // Return cached token if available
+  if (cachedAccessToken) {
+    return cachedAccessToken;
+  }
+  
+  // If no cached token, user needs to sign in again to get Drive permissions
+  return null;
+};
+
+export { auth };
