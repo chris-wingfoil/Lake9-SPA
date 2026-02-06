@@ -36,7 +36,13 @@ export async function saveArtToPrivateDrive(
 ): Promise<SaveResult> {
   try {
     // Get authenticated token
+    console.log('?? Getting access token...');
     const accessToken = await getAuthenticatedToken();
+    console.log('? Access token retrieved:', accessToken ? 'YES' : 'NO');
+    
+    if (!accessToken) {
+      throw new Error('No access token available. Please sign out and sign in again to grant Drive access.');
+    }
     
     // Generate encryption password if not provided
     const password = encryptionPassword || generateSecurePassword();
@@ -44,10 +50,12 @@ export async function saveArtToPrivateDrive(
     // Encrypt the art result
     console.log('?? Encrypting art data...');
     const encryptedData = await encryptData(artResult, password);
+    console.log('? Encryption complete');
     
     // Find or create Lake9 folder in Drive
     console.log('?? Finding Lake9 folder in Google Drive...');
     const folderId = await findOrCreateFolder(LAKE9_FOLDER_NAME, accessToken);
+    console.log('? Folder ready:', folderId);
     
     // Generate filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -69,7 +77,7 @@ export async function saveArtToPrivateDrive(
       encryptionKey: password
     };
   } catch (error) {
-    console.error('Failed to save art to Drive:', error);
+    console.error('? Failed to save art to Drive:', error);
     throw error;
   }
 }

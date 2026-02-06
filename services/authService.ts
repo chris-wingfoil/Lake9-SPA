@@ -98,14 +98,19 @@ export const cacheAccessToken = (token: string | null) => {
  */
 export const getDriveAccessToken = async (): Promise<string | null> => {
   const user = auth.currentUser;
-  if (!user) return null;
+  if (!user) {
+    console.warn('?? No user signed in');
+    return null;
+  }
   
   // Return cached token if available
   if (cachedAccessToken) {
+    console.log('? Using cached access token');
     return cachedAccessToken;
   }
   
   // If no cached token, user needs to sign in again to get Drive permissions
+  console.warn('?? No cached access token - user must sign in again');
   return null;
 };
 

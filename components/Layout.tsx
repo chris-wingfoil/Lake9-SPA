@@ -1,21 +1,25 @@
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, signIn, signOut } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const handleAuthClick = async () => {
-    try {
-      if (user) {
-        await signOut();
-      } else {
-        await signIn();
-      }
-    } catch (error) {
-      console.error('Auth action failed:', error);
+const handleAuthClick = async () => {
+  try {
+    setAuthError(null);
+    if (user) {
+      await signOut();
+    } else {
+      await signIn();
     }
-  };
+  } catch (error: any) {
+    console.error('Auth action failed:', error);
+    setAuthError(error.message || 'Authentication failed');
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col">

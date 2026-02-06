@@ -17,35 +17,50 @@ const [isSaving, setIsSaving] = useState(false);
 const [saveSuccess, setSaveSuccess] = useState(false);
 const [encryptionKey, setEncryptionKey] = useState<string | null>(null);
 
-const handleDriveSync = async () => {
-  if (!user) {
-    alert('Please sign in with Google to sync to Drive');
-    return;
-  }
+  const handleDriveSync = async () => {
+    if (!user) {
+      alert('Please sign in with Google to sync to Drive');
+      return;
+    }
 
-  try {
-    setIsSaving(true);
-    setSaveSuccess(false);
+    try {
+      setIsSaving(true);
+      setSaveSuccess(false);
       
-    const saveResult = await saveArtToPrivateDrive(artResult);
+      console.log('Starting Drive sync...');
+      const saveResult = await saveArtToPrivateDrive(artResult);
       
-    setEncryptionKey(saveResult.encryptionKey);
-    setSaveSuccess(true);
+      setEncryptionKey(saveResult.encryptionKey);
+      setSaveSuccess(true);
       
-    // Show success message
-    alert(
-      `✅ Saved to Google Drive!\n\n` +
-      `📁 File: ${saveResult.driveResult.name}\n` +
-      `🔐 Encryption Key: ${saveResult.encryptionKey}\n\n` +
-      `⚠️ IMPORTANT: Save this encryption key! You'll need it to decrypt your art later.`
-    );
-  } catch (error) {
-    console.error('Drive sync failed:', error);
-    alert('Failed to sync to Google Drive. Please try again.');
-  } finally {
-    setIsSaving(false);
-  }
-};
+      // Show success message
+      alert(
+        `✅ Saved to Google Drive!\n\n` +
+        `📁 File: ${saveResult.driveResult.name}\n` +
+        `🔐 Encryption Key: ${saveResult.encryptionKey}\n\n` +
+        `⚠️ IMPORTANT: Save this encryption key! You'll need it to decrypt your art later.`
+      );
+    } catch (error: any) {
+      console.error('Drive sync failed:', error);
+      
+      // Show detailed error message
+      let errorMessage = 'Failed to sync to Google Drive.\n\n';
+      
+      if (error.message?.includes('not authenticated')) {
+        errorMessage += '❌ Authentication Error\n\nPlease sign out and sign in again to grant Drive access.';
+      } else if (error.message?.includes('No access token')) {
+        errorMessage += '❌ No Access Token\n\nPlease sign out and sign in again to grant Google Drive permissions.';
+      } else if (error.message?.includes('403') || error.message?.includes('Drive upload failed')) {
+        errorMessage += '❌ Drive API Error\n\nMake sure:\n1. Google Drive API is enabled in Google Cloud Console\n2. You granted Drive permissions during sign-in\n3. OAuth scopes are configured correctly';
+      } else {
+        errorMessage += `Error: ${error.message || 'Unknown error'}`;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
     <div className="max-w-6xl mx-auto py-12 px-4 animate-in fade-in duration-700">
       <div className="flex flex-col lg:flex-row gap-8 items-start">
