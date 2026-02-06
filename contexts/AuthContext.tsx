@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from 'firebase/auth';
-import { onAuthChange, signInWithGoogle, signOut as authSignOut, AuthUser } from '../services/authService';
+import { onAuthChange, signInWithGoogle, signOut as authSignOut, AuthUser, handleRedirectResult } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +18,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Handle redirect result on page load
+    const checkRedirect = async () => {
+      const redirectResult = await handleRedirectResult();
+      if (redirectResult) {
+        setAuthUser(redirectResult);
+        console.log('? Sign-in successful via redirect');
+      }
+    };
+    
+    checkRedirect();
+    
+    // Listen to auth state changes
     const unsubscribe = onAuthChange((firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
@@ -28,10 +40,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = async () => {
     try {
-      const userData = await signInWithGoogle();
-      setAuthUser(userData);
+      // This will redirect the page
+      await signInWithGoogle();
+      // Note: Code after this won't execute as page redirects
     } catch (error) {
       console.error('Sign-in failed:', error);
+      setLoading(false);
       throw error;
     }
   };

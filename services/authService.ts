@@ -1,6 +1,7 @@
 import { 
   getAuth, 
-  signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   GoogleAuthProvider, 
   onAuthStateChanged,
@@ -24,12 +25,40 @@ export interface AuthUser {
 }
 
 /**
- * Sign in with Google and request Drive API access
+ * Sign in with Google using redirect flow (no popup, no COOP issues)
  * Returns the authenticated user with access token for Drive API
  */
 export const signInWithGoogle = async (): Promise<AuthUser> => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    // Start redirect to Google sign-in
+    await signInWithRedirect(auth, googleProvider);
+    
+    // This will redirect the page - execution stops here
+    // Result will be handled by handleRedirectResult() on page load
+    return {
+      uid: '',
+      email: null,
+      displayName: null,
+      photoURL: null,
+      accessToken: null
+    };
+  } catch (error: any) {
+    console.error('Sign-in error:', error);
+    throw new Error(`Authentication failed: ${error.message}`);
+  }
+};
+
+/**
+ * Handle redirect result after Google sign-in
+ * Call this on app initialization
+ */
+export const handleRedirectResult = async (): Promise<AuthUser | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    
+    if (!result) {
+      return null; // No redirect result (normal page load)
+    }
     
     // Get the Google Access Token for Drive API calls
     const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -48,8 +77,8 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       accessToken
     };
   } catch (error: any) {
-    console.error('Sign-in error:', error);
-    throw new Error(`Authentication failed: ${error.message}`);
+    console.error('Redirect result error:', error);
+    return null;
   }
 };
 
