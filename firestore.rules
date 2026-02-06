@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.admin == true;
+    }
+    
+    function isSecurityTeam() {
+      return isAuthenticated() && 
+             (request.auth.token.role == 'security' || 
+              request.auth.token.role == 'compliance' ||
+              isAdmin());
+    }
+    
+    // Internal Documents Collection
+    // For security compliance docs, audit reports, etc.
+    match /internal_documents/{documentId} {
+      // Read: Security team and admins only
+      allow read: if isSecurityTeam();
+      
+      // Create: Admins and dev team can submit
+      allow create: if isAuthenticated();
+      
+      // Update: Security team can approve/reject
+      allow update: if isSecurityTeam();
+      
+      // Delete: Admins only
+      allow delete: if isAdmin();
+    }
+    
+    // User Documents Collection
+    // For user-generated content (if needed in future)
+    match /user_documents/{userId} {
+      // Users can only access their own documents
+      allow read, write: if isAuthenticated() && 
+                           request.auth.uid == userId;
+    }
+    
+    // Public Documents Collection
+    // For publicly accessible documentation
+    match /public_documents/{documentId} {
+      // Anyone can read
+      allow read: if true;
+      
+      // Only admins can write
+      allow write: if isAdmin();
+    }
+    
+    // Audit Logs Collection
+    // For security event tracking
+    match /audit_logs/{logId} {
+      // Security team can read
+      allow read: if isSecurityTeam();
+      
+      // System can write (via Admin SDK)
+      allow write: if false; // Only via backend functions
+    }
+    
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+/* 
+  SETUP INSTRUCTIONS:
+  
+  1. Go to Firebase Console
+  2. Navigate to Firestore Database
+  3. Click "Rules" tab
+  4. Paste these rules
+  5. Click "Publish"
+  
+  CUSTOM CLAIMS SETUP (for admin/security roles):
+  
+  Add custom claims via Firebase Admin SDK:
+  
+  const admin = require('firebase-admin');
+  
+  // Set admin claim
+  await admin.auth().setCustomUserClaims(uid, { 
+    admin: true 
+  });
+  
+  // Set security team claim
+  await admin.auth().setCustomUserClaims(uid, { 
+    role: 'security' 
+  });
+  
+  // Set compliance officer claim
+  await admin.auth().setCustomUserClaims(uid, { 
+    role: 'compliance' 
+  });
+  
+  Users must sign out and back in for claims to take effect.
+*/
