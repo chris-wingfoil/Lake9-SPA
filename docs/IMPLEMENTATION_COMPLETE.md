@@ -95,7 +95,30 @@ Privacy Guarantees:
 3. Navigate to **Authentication** ? **Sign-in method**
 4. Click **Google** ? Toggle **Enable** ? Save
 
-### 2. Enable Drive API in Google Cloud Console (5 minutes)
+### 2. Configure OAuth Client for Security (10 minutes)
+
+**Important:** Google requires proper OAuth configuration for security.
+
+**Quick Steps:**
+1. Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials?project=lake9-dev)
+2. Edit your OAuth 2.0 Client ID
+3. Set **Application type:** "Web application"
+4. Add **Authorized JavaScript origins:**
+   ```
+   http://localhost:5173
+   https://lake9-dev.web.app
+   https://lake9-dev.firebaseapp.com
+   ```
+5. Add **Authorized redirect URIs:**
+   ```
+   http://localhost:5173/__/auth/handler
+   https://lake9-dev.web.app/__/auth/handler
+   https://lake9-dev.firebaseapp.com/__/auth/handler
+   ```
+
+**See detailed guide:** `docs/QUICK_FIX_OAUTH.md`
+
+### 3. Enable Drive API in Google Cloud Console (5 minutes)
 
 **Required Steps:**
 
@@ -105,7 +128,17 @@ Privacy Guarantees:
 4. Search: "Google Drive API"
 5. Click **Enable**
 
-### 3. Configure OAuth Consent Screen (10 minutes)
+### 3. Enable Drive API in Google Cloud Console (5 minutes)
+
+**Required Steps:**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Select project: `lake9-dev`
+3. Navigate to **APIs & Services** ? **Library**
+4. Search: "Google Drive API"
+5. Click **Enable**
+
+### 4. Configure OAuth Consent Screen (10 minutes)
 
 **Required Steps:**
 

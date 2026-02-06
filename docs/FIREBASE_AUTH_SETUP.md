@@ -41,12 +41,64 @@ const firebaseConfig = {
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/library/drive.googleapis.com?project=lake9-dev)
 2. Click **"Enable"** for Google Drive API
-3. Go to [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent?project=lake9-dev)
-4. Add scopes:
-   - ? `https://www.googleapis.com/auth/drive.file` (Create and access files in Drive)
-   - ? `https://www.googleapis.com/auth/userinfo.profile` (User profile info)
 
-## Step 5: Test Authentication ?
+## Step 5: Configure OAuth Client for Secure Flow
+
+**Important:** Firebase Auth requires proper OAuth client configuration for security.
+
+### 5.1 Navigate to Credentials
+1. Go to [APIs & Services > Credentials](https://console.cloud.google.com/apis/credentials?project=lake9-dev)
+2. Find your OAuth 2.0 Client ID (created by Firebase)
+   - Look for client ID starting with your project number
+   - Or create new: Click **"+ CREATE CREDENTIALS"** ? **"OAuth client ID"**
+
+### 5.2 Configure OAuth Client
+1. **Application type:** Select **"Web application"**
+2. **Name:** "Lake9 SPA Web Client" (or keep Firebase default)
+3. **Authorized JavaScript origins:**
+   ```
+   http://localhost:5173
+   https://lake9-dev.web.app
+   https://lake9-dev.firebaseapp.com
+   ```
+4. **Authorized redirect URIs:**
+   ```
+   http://localhost:5173/__/auth/handler
+   https://lake9-dev.web.app/__/auth/handler
+   https://lake9-dev.firebaseapp.com/__/auth/handler
+   ```
+5. Click **"Save"**
+
+### 5.3 Configure OAuth Consent Screen
+1. Go to [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent?project=lake9-dev)
+2. **User Type:** Select **"External"** (for testing) or **"Internal"** (if using Google Workspace)
+3. **Application Information:**
+   - App name: **"Lake9 SPA"**
+   - Support email: Your email
+   - App logo: (optional)
+4. **Developer contact:** Your email
+5. Click **"Save and Continue"**
+
+### 5.4 Add Scopes
+1. Click **"Add or Remove Scopes"**
+2. Add these scopes:
+   - ? `https://www.googleapis.com/auth/drive.file` - Create and access app files in Drive
+   - ? `https://www.googleapis.com/auth/userinfo.profile` - User profile info
+   - ? `https://www.googleapis.com/auth/userinfo.email` - User email
+3. Click **"Update"** ? **"Save and Continue"**
+
+### 5.5 Add Test Users (for External apps)
+1. Click **"Add Users"**
+2. Add your Google account email(s) for testing
+3. Click **"Save and Continue"**
+
+### 5.6 Review and Publish (Optional)
+- For **Testing:** Leave as is, only test users can access
+- For **Production:** Complete app verification (required for public use)
+
+**Note:** Firebase Auth handles PKCE automatically for public clients, so the warning should resolve once OAuth client is properly configured.
+
+## Step 6: Test Authentication ?
 
 ### All Implementation Complete!
 
@@ -104,7 +156,7 @@ User Browser ? Encrypt Data ? Upload to User's Drive
 
 See `docs/PRIVACY_ARCHITECTURE.md` for detailed documentation.
 
-## Step 6: Production Deployment
+## Step 7: Production Deployment
 
 1. Run locally: `npm run dev`
 2. Click **"Sign In with Google"**
@@ -133,6 +185,15 @@ User Browser
 - ? Portable (data lives in user's Drive)
 
 ## Troubleshooting
+
+### "OAuth Configuration Warning: Unconfigured to use secure OAuth flows"
+This warning appears when OAuth client isn't properly configured. Follow **Step 5** above to:
+- Set application type to "Web application"
+- Add authorized JavaScript origins
+- Add authorized redirect URIs (Firebase uses `/__/auth/handler`)
+- Configure OAuth consent screen with proper scopes
+
+**Note:** Firebase Auth automatically uses secure flows (popup/redirect with token exchange), but the OAuth client must be configured correctly.
 
 ### "Google hasn't verified this app"
 - Normal for testing. Click "Advanced" ? "Go to lake9-dev (unsafe)"
