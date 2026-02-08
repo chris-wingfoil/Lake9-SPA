@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "log:add": "node tools/log-updater.cjs add",
     "log:status": "node tools/log-updater.cjs status",
-    "log:view": "node tools/log-updater.cjs view"
+    "log:view": "node tools/log-updater.cjs view",
+    "log:analyze": "node tools/log-updater.cjs analyze",
+    "log:priority": "node tools/log-updater.cjs priority",
+    "log:deps": "node tools/log-updater.cjs deps"
   },
   "dependencies": {
     "@google/genai": "^1.39.0",

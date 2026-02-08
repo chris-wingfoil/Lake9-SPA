@@ -1,7 +1,7 @@
 # ?? Lake9 SPA - Prompt Log Future Enhancements
 
 > **Status:** Documented (Not Implemented)  
-> **Purpose:** Roadmap for advanced prompt log automation features  
+> **Purpose:** Roadmap for advanced prompt log features  
 > **Philosophy:** KISS - Build only when needed, document now for planning
 
 ---
@@ -9,6 +9,17 @@
 ## ?? Overview
 
 This document outlines potential enhancements to the Prompt Log system. **These are NOT implemented yet** - they're stubs to show the vision and make future development easier.
+
+**Current Features (V2 - Implemented):**
+- ? Auto-numbering system (001, 002, 003...)
+- ? Priority tracking (P0-P3)
+- ? Effort estimation (hours/days)
+- ? Dependency tracking (#001, #002)
+- ? Analysis dashboard
+- ? Priority sorting
+- ? Dependency chain visualization
+- ? Interactive prompts
+- ? Command-line flags
 
 ---
 
@@ -199,48 +210,97 @@ Status: Complete
 
 ## ?? Additional Future Ideas
 
-### 4. ?? Analytics Dashboard
-- Count prompts by status
-- Average time to completion
-- Most common feedback types
-- Visualize with Recharts (already in project)
+### 4. ?? Gantt Chart Visualization
+- Visual timeline of prompts
+- Show dependencies as arrows
+- Highlight critical path
+- Export as PNG or SVG
+- Integration with existing Recharts library
 
-### 5. ?? Notifications
+### 5. ?? Burndown Chart
+- Track remaining hours over time
+- Sprint planning visualization
+- Velocity calculation
+- Forecasting completion date
+
+### 6. ?? Time Tracking Integration
+- Start/stop timer for prompts
+- Track actual hours vs. estimated
+- Generate time reports
+- Integration with Toggl/Harvest APIs
+
+### 7. ?? GitHub Issues Integration
+- Create GitHub issue from prompt
+- Sync status bidirectionally
+- Link commits to issues automatically
+- Close issue when prompt complete
+
+### 8. ?? Notifications
 - Slack/Discord webhook when prompt approved
 - Email digest of weekly prompt activity
 - Browser notification for status changes
+- Configurable notification rules
 
-### 6. ?? Search & Filter
+### 9. ?? Advanced Search & Filter
 - CLI command: `npm run log:search "keyword"`
-- Filter by date range, status, source
-- Export filtered results to CSV
+- Filter by date range, status, priority, source
+- Export filtered results to CSV/JSON
+- Saved filter presets
 
-### 7. ?? AI Integration
-- Use Gemini API to suggest prompt numbering
+### 10. ?? AI-Powered Features
+- Use Gemini API to suggest priorities
 - Auto-categorize prompts (Feature/Bug/Enhancement)
 - Generate commit message templates
+- Predict effort estimates based on description
+- Smart dependency detection
+
+### 11. ?? Mobile/Web Dashboard
+- React component to display PROMPTS_LOG.md
+- Add to Lake9 SPA layout
+- Real-time updates via Firebase
+- Interactive filtering and sorting
+
+### 12. ?? Milestone Tracking
+- Group prompts into milestones/epics
+- Track progress by milestone
+- Burndown by milestone
+- Release planning features
 
 ---
 
 ## ??? Implementation Priority
 
-**Phase 1 (Current):**
-- ? Basic log structure
+**Phase 1 (? COMPLETE - V1):**
+- ? Basic log structure (table + detailed entries)
 - ? Manual entry support
 - ? Auto-numbering script
+- ? Status tracking
 
-**Phase 2 (Next):**
-- ?? Logs branch strategy
-- ?? Drive sync integration
+**Phase 2 (? COMPLETE - V2):**
+- ? Priority tracking (P0-P3)
+- ? Effort estimation (hours/days)
+- ? Dependency tracking
+- ? Analysis dashboard
+- ? Priority sorting
+- ? Dependency chain visualization
 
-**Phase 3 (Future):**
-- ?? Git hooks automation
-- ?? Analytics dashboard
+**Phase 3 (NEXT - High Priority):**
+- ?? Logs branch strategy (archive old prompts)
+- ?? Drive sync integration (backup to Google Drive)
+- ?? Git hooks automation (auto-link commits)
 
-**Phase 4 (Advanced):**
-- ?? Notifications
-- ?? Search & filter
-- ?? AI integration
+**Phase 4 (FUTURE - Medium Priority):**
+- ?? Gantt chart visualization
+- ?? Burndown charts
+- ?? Time tracking integration
+- ?? GitHub Issues sync
+
+**Phase 5 (ADVANCED - Low Priority):**
+- ?? Notifications (Slack/Discord/Email)
+- ?? Advanced search & filter
+- ?? AI-powered features
+- ?? Mobile/Web dashboard
+- ?? Milestone tracking
 
 ---
 
@@ -274,5 +334,5 @@ When implementing these features:
 ---
 
 **Last Updated:** 2026-02-07  
-**Status:** Planning & Documentation Phase  
-**Next Review:** After 10 prompts logged (or as needed)
+**Status:** V2 Implemented - Priority, Hours, Dependencies, Analysis  
+**Next Review:** After 10 prompts logged (or when Phase 3 features needed)
