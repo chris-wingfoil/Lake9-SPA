@@ -10,10 +10,13 @@
 
 This document outlines potential enhancements to the Prompt Log system. **These are NOT implemented yet** - they're stubs to show the vision and make future development easier.
 
-**Current Features (V2 - Implemented):**
+**Current Features (V2.1 - Implemented):**
 - ? Auto-numbering system (001, 002, 003...)
 - ? Priority tracking (P0-P3)
 - ? Effort estimation (hours/days)
+- ? **NEW:** Actual hours tracking (Est/Act/Var columns)
+- ? **NEW:** Estimation accuracy analysis
+- ? **NEW:** Scalability metrics (capacity monitoring)
 - ? Dependency tracking (#001, #002)
 - ? Analysis dashboard
 - ? Priority sorting
@@ -25,9 +28,150 @@ This document outlines potential enhancements to the Prompt Log system. **These 
 
 ## ?? Planned Enhancements
 
-### 1. ?? Separate Logs Branch Strategy
+### Phase 3.5: Usability Enhancements (PRIORITY - Based on Grok Feedback)
+
+**Priority Order:**
+
+#### 1. ?? Auto-Dependency Checker (4h, P1)
+
+**Goal:** Automatically detect and suggest dependencies based on prompt descriptions
+
+**Why Priority:** Highest usability impact, prevents missing dependencies
+
+**Implementation:**
+```javascript
+// tools/log-updater.cjs - checkDeps command
+function checkDependencies(promptNumber) {
+  const prompt = getPrompt(promptNumber);
+  const description = prompt.description.toLowerCase();
+  
+  // Find mentions of other prompts
+  const mentions = description.match(/#\d{3}|prompt\s+#?\d{3}/gi);
+  const currentDeps = prompt.depends.split(',').map(d => d.trim());
+  
+  // Suggest missing dependencies
+  const suggested = mentions.filter(m => !currentDeps.includes(m));
+  
+  if (suggested.length > 0) {
+    console.log(`?? Suggested dependencies: ${suggested.join(', ')}`);
+    console.log(`   Add with: npm run log:add-dep ${promptNumber} "${suggested.join(',')}"`);
+  } else {
+    console.log('? Dependencies look correct!');
+  }
+}
+```
+
+**Features:**
+- Scan prompt description for mentions of other prompts
+- Suggest adding dependencies if not already listed
+- Validate no circular dependencies
+- Command: `npm run log:check-deps 002`
+
+**Files to Create:**
+- Update `tools/log-updater.cjs` with `checkDeps` function
+- Add `npm run log:check-deps` script to package.json
+
+---
+
+#### 2. ?? Git Issues Integration (6h, P1)
+
+**Goal:** Link prompts to GitHub Issues for team visibility
+
+**Why Priority:** High value for collaboration, syncs with existing workflow
+
+**Implementation:**
+```javascript
+// tools/log-updater.cjs - createIssue command
+async function createGitHubIssue(promptNumber) {
+  const prompt = getPrompt(promptNumber);
+  
+  const issueBody = `
+## Prompt #${promptNumber}
+
+**Priority:** ${prompt.priority}
+**Estimated Hours:** ${prompt.hours}
+**Dependencies:** ${prompt.depends}
+
+### Description
+${prompt.description}
+
+### Acceptance Criteria
+- [ ] All features implemented
+- [ ] Tests passing
+- [ ] Documentation updated
+- [ ] Deployed to production
+
+**Tracked in:** PROMPTS_LOG.md
+  `;
+  
+  // Call GitHub API (via Cloud Function for security)
+  const response = await fetch('https://us-central1-lake9-dev.cloudfunctions.net/createIssue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: `[Prompt #${promptNumber}] ${prompt.description}`,
+      body: issueBody,
+      labels: [prompt.priority, 'prompt-tracking']
+    })
+  });
+  
+  const issue = await response.json();
+  console.log(`? Created GitHub Issue #${issue.number}`);
+  console.log(`   https://github.com/chris-wingfoil/Lake9-SPA/issues/${issue.number}`);
+}
+```
+
+**Features:**
+- Create GitHub Issue from prompt
+- Link prompt to existing issue
+- Sync status: Issue closed ? Prompt complete
+- Two-way sync via webhooks (optional)
+
+**Commands:**
+```bash
+npm run log:create-issue 002         # Create GitHub Issue
+npm run log:link-issue 002 45        # Link to existing Issue #45
+npm run log:sync-issues              # Sync all prompts with issues
+```
+
+**Files to Create:**
+- Update `tools/log-updater.cjs` with GitHub integration
+- Create `functions/src/createIssue.ts` (Cloud Function)
+- Add npm scripts to package.json
+
+---
+
+#### 3. ?? Estimation Learning (3h, P2)
+
+**Goal:** Learn from estimation variance and suggest adjusted estimates
+
+**Features:**
+- Track variance patterns by priority
+- Suggest multipliers: "P1 prompts average +15%, suggest 17h instead of 15h?"
+- Show confidence levels: "Based on 5 P1 prompts"
+- Command: `npm run log:suggest-estimate 002`
+
+---
+
+### Phase 3: Integration & Automation (Updated Priorities)
+
+**Total Phase 3:** 22h (can split into 2-3 prompts)
+
+**Priority Order (Based on Grok Feedback):**
+
+1. **Auto-Dependency Checker** (4h, P1) - See Phase 3.5 above
+2. **Git Issues Integration** (6h, P1) - See Phase 3.5 above
+3. **Drive Sync** (4h, P2) - Off-site backup
+4. **Git Hooks** (3h, P2) - Auto-update on commits
+5. **Logs Branch** (5h, P3) - Archive system
+
+---
+
+#### 1. ?? Separate Logs Branch Strategy (5h, P3)
 
 **Goal:** Keep master clean while preserving full prompt history
+
+**When Needed:** Approaching 50 prompts (currently at 1, monitor via Scalability Metrics)
 
 **Implementation Plan:**
 ```bash

@@ -478,14 +478,27 @@ function viewLog() {
   });
 }
 
+// Command: Complete prompt (stub for V2.1)
+function completePrompt(promptNumber, actualHours) {
+  console.log('?? Feature coming in V2.1!');
+  console.log(`?? For now, manually update Prompt #${promptNumber} in PROMPTS_LOG.md:`);
+  console.log(`   - Set Act column to: ${actualHours || '[actual hours]'}`);
+  console.log(`   - Calculate Var: (Actual - Estimated) / Estimated * 100%`);
+  console.log(`   - Set Status to: ? Complete`);
+  console.log(`\n?? Or use: npm run log:view`);
+}
+
+
+
 // Command: Show help
 function showHelp() {
   console.log(`
-?? Lake9 SPA - Prompt Log Updater V2
+?? Lake9 SPA - Prompt Log Updater V2.1
 
 Usage:
   npm run log:add "description" [options]  - Add new prompt entry
   npm run log:status 001 "status"          - Update prompt status
+  npm run log:complete 001 8h              - Mark complete with actual hours
   npm run log:analyze                      - Generate analysis dashboard
   npm run log:priority                     - View prompts by priority
   npm run log:deps                         - Show dependency chain
@@ -500,6 +513,7 @@ Examples:
   npm run log:add "Implement user dashboard"
   npm run log:add "Export feature" --priority P1 --hours 6h --depends "#001"
   npm run log:status 001 "? Complete"
+  npm run log:complete 001 8h
   npm run log:analyze
   npm run log:priority
   npm run log:deps
@@ -533,6 +547,10 @@ async function main() {
       
     case 'status':
       updateStatus(args[1], args.slice(2).join(' '));
+      break;
+      
+    case 'complete':
+      completePrompt(args[1], args[2]);
       break;
       
     case 'analyze':
